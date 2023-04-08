@@ -1,0 +1,10 @@
+LICENSE
+README.md
+pyproject.toml
+nonebot_plugin_SDGPT/__init__.py
+nonebot_plugin_SDGPT/bot.py
+nonebot_plugin_SDGPT.egg-info/PKG-INFO
+nonebot_plugin_SDGPT.egg-info/SOURCES.txt
+nonebot_plugin_SDGPT.egg-info/dependency_links.txt
+nonebot_plugin_SDGPT.egg-info/requires.txt
+nonebot_plugin_SDGPT.egg-info/top_level.txt

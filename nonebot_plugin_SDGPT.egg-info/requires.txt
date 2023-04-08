@@ -1,0 +1,5 @@
+nonebot2
+python-dotenv
+webuiapi
+revChatGPT
+EdgeGPT
