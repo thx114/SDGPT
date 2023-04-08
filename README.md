@@ -9,6 +9,8 @@
 - [x] Bing对话
 - [x] Stable-Diffusion 文生图  
   > 基于 chatGPT 或 bing 解析自然语言转 Stable-Diffusion 生成图像
+- [x] qq 频道支持 
+  > qq 频道下 chatGPT bing 的对话会分段发送
 
 ## 使用
 
