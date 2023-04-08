@@ -5,9 +5,9 @@ import os
 import sys
 import time
 import re
-from nonebot import get_driver
+
 from nonebot.log import logger_id
-from nonebot.log import default_format, default_filter
+from nonebot.log import  default_filter
 
 from nonebot import logger
 import webuiapi
@@ -200,7 +200,7 @@ cookies_file_path="./cookies.json"
         cfg.update(cfg_)
     except:
         err('Config','配置文件 config.cfg 未配置')
-        raise Exception('配置文件 config.cfg 未配置')
+        # raise Exception('配置文件 config.cfg 未配置')
 
 
     botList  = []

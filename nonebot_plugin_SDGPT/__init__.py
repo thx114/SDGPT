@@ -1,4 +1,4 @@
-from nonebot import get_driver
+from nonebot import get_driver, require
 
 
 from .bot import info,error,warn
@@ -6,7 +6,7 @@ from nonebot.plugin import on_command , on_message , on
 from nonebot.adapters.onebot.v11 import Bot, MessageSegment
 from nonebot.adapters import Message
 from nonebot.plugin import PluginMetadata
-from nonebot_plugin_guild_patch import GuildMessageEvent
+
 from nonebot.adapters.onebot.v11.event import GroupMessageEvent
 from nonebot.params import CommandArg
 from nonebot.rule import to_me
@@ -22,7 +22,7 @@ __plugin_meta__ = PluginMetadata(
     extra={},
 )
 
-
+GuildMessageEvent = require('nonebot_plugin_guild_patch').GuildMessageEvent
 
 driver = get_driver()
 
