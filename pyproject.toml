@@ -3,11 +3,13 @@ name = "nonebot-plugin-SDGPT"
 authors = [
     {name = "F_thx", email = "thx1140093097@gmail.com"},
 ]
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
     "nonebot2",
     'python-dotenv',
     'webuiapi',
     'revChatGPT',
-    'EdgeGPT'
+    'EdgeGPT',
+    'nonebot-adapter-onebot',
+    'nonebot2[fastapi]'
 ]
