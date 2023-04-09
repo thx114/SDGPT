@@ -72,7 +72,7 @@ cfg = {
 
 async def Chat(func,message:str,mode=1): 
     if not message or len(message)<1:return
-    Rtime = cfg['Chat_stream_waitTime']
+    Rtime = int(cfg['Chat_stream_waitTime'])
     endStr = cfg['Chat_stream_endStr']
     text = ''
     out_text=''
@@ -117,7 +117,7 @@ async def Chat_api(func,message:str,mode=1):
 
 async def Bing(func,message,mode=1):
     if not message or len(message)<1:return
-    Rtime = cfg['Chat_stream_waitTime']
+    Rtime = int(cfg['Chat_stream_waitTime'])
     endStr = cfg['Chat_stream_endStr']
     text = ''
     out_text=''
