@@ -24,3 +24,13 @@ python -m pip install nonebot-plugin-SDGPT
 > 如果你没有使用过NoneBot,  
 > 这里有一个现成的NoneBot基于SDGPT机器人:  
 > [**SDGPT-BOT**](https://github.com/thx114/SDGPT-BOT)
+>
+## more
+
+[**QQ 群 391517834**](https://jq.qq.com/?_wv=1027&k=eKsgovej)
+[**SDGPT BOT**](https://github.com/thx114/SDGPT-BOT)
+
+[**NoneBot**](https://v2.nonebot.dev/)
+[**ChatGPT**](https://github.com/acheong08/ChatGPT)
+[**BingGPT**](https://github.com/dice2o/BingGPT)
+[**SD-api**](https://github.com/mix1009/sdwebuiapi)
