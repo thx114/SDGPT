@@ -188,7 +188,7 @@ model="gpt-3.5-turbo"
 
 bing # Bing api 配置:
 cookies_file_path="./cookies.json" # 设置:https://github.com/thx114/SDGPT/wiki/bing-cookies
-            """
+"""
             f.write(text)
 
 
