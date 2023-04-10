@@ -186,16 +186,16 @@ chat # 聊天 api 通用设置:
 presets_dir='./presets' # 预设文件夹
 Chat_stream_waitTime=2 # 频道内 分条发送间隔 (秒)
 Chat_stream_endStr=('？','。','?','\n') # 频道内 分条发送分割依据
-defaultAI='chatGPT' # 默认 AI
+defaultAI='ChatGPT' # 默认 AI
 
-chatGPT # ChatGPT 配置 (网页):
+ChatGPT # ChatGPT 配置 (网页):
 access_token="" # access_token  获取:https://chat.openai.com/api/auth/session
 
-chatGPT_api # ChatGPT api 配置:
+ChatGPT_api # ChatGPT api 配置:
 api_key="" # api_key 获取:https://platform.openai.com/account/api-keys
 model="gpt-3.5-turbo"
 
-bing # Bing api 配置:
+Bing # Bing api 配置:
 cookies_file_path="./cookies.json" # 设置:https://github.com/thx114/SDGPT/wiki/bing-cookies
 """
             f.write(text)
