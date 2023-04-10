@@ -13,6 +13,7 @@ import webuiapi
 from revChatGPT.V1 import Chatbot as chatGPT
 from revChatGPT.V3 import Chatbot as chatGPT_api
 from EdgeGPT import Chatbot as bing
+import ast
 logger.remove(logger_id)
 
 def formatter(record):
@@ -73,7 +74,7 @@ cfg = {
 async def Chat(func,message:str,mode=1): 
     if not message or len(message)<1:return
     Rtime = int(cfg['Chat_stream_waitTime'])
-    endStr = cfg['Chat_stream_endStr']
+    endStr = ast.literal_eval(cfg['Chat_stream_endStr'])
     text = ''
     out_text=''
     info('ChatGPT','开始询问 (网页)')
@@ -98,7 +99,7 @@ async def Chat(func,message:str,mode=1):
 async def Chat_api(func,message:str,mode=1):
     if not message or len(message)<1:return
     Rtime = cfg['Chat_stream_waitTime']
-    endStr = cfg['Chat_stream_endStr']
+    endStr = ast.literal_eval(cfg['Chat_stream_endStr'])
     text = ''
     info('ChatGPT api','开始询问 api')
     for data in chatbot_api.ask_stream(message):
@@ -121,7 +122,7 @@ async def Chat_api(func,message:str,mode=1):
 async def Bing(func,message,mode=1):
     if not message or len(message)<1:return
     Rtime = int(cfg['Chat_stream_waitTime'])
-    endStr = cfg['Chat_stream_endStr']
+    endStr = ast.literal_eval(cfg['Chat_stream_endStr'])
     text = ''
     out_text=''
     info('Bing','开始询问 api')
