@@ -185,7 +185,7 @@ text2img_proxy='127.0.0.1:7860' #Stable-Diffusion api地址 (SD内配置 --serve
 chat # 聊天 api 通用设置:
 presets_dir='./presets' # 预设文件夹
 Chat_stream_waitTime=2 # 频道内 分条发送间隔 (秒)
-Chat_stream_endStr=('？','。','?','\n') # 频道内 分条发送分割依据
+Chat_stream_endStr=('？','。','?','\\n') # 频道内 分条发送分割依据
 defaultAI='ChatGPT' # 默认 AI
 
 ChatGPT # ChatGPT 配置 (网页):
