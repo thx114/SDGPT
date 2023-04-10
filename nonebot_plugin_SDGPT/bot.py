@@ -27,7 +27,8 @@ def formatter(record):
         'SUCCESS':'<green>',
         'FBOT':'<fg #bf0060>',
         'suc':'<GREEN>[OK]</GREEN><green>',
-        'err':'<RED>[ERROR]</RED><RED><white>'
+        'err':'<RED>[ERROR]</RED><RED><white>',
+        'STDOUT':'<cyan>'
     }
     color_tag=Dir[level]
     if not color_tag:color_tag = ''
@@ -86,12 +87,13 @@ async def Chat(func,message:str,mode=1):
             success('ChatGPT', outText)
             await func.send(outText)
             out_text = data["message"] # type: ignore
+    if mode == 2:
+        success('ChatGPT', text)
+        return text.replace(r'.*\.AIP','')
     if len(out_text) < len(text) or mode == 0:
         outText = text.replace(out_text,'')
         success('ChatGPT', outText)
         await func.send(outText)
-    if mode ==2:
-        return text.replace(r'.*\.AIP','')
     
 async def Chat_api(func,message:str,mode=1):
     if not message or len(message)<1:return
@@ -108,11 +110,13 @@ async def Chat_api(func,message:str,mode=1):
             success('ChatGPT api', text)
             await func.send(text)
             text = ''
-    if len(text) > 0:
+    if mode ==2:
+        success('ChatGPT api', text)
+        return text.replace(r'.*\.AIP','')
+    if len(text) > 0 or mode == 0:
         success('ChatGPT api', text)
         await func.send(text)
-    if mode ==2:
-        return text.replace(r'.*\.AIP','')
+
 
 async def Bing(func,message,mode=1):
     if not message or len(message)<1:return
@@ -133,12 +137,13 @@ async def Bing(func,message,mode=1):
             if len(outText.replace(' ','')) > 0:
                 await func.send(outText)
             out_text = text # type: ignore
+    if mode ==2:
+        success('Bing', text)
+        return text.replace(r'.*\.AIP','')
     if len(out_text) < len(text) or mode == 0:
         outText = text.replace(out_text,'')
         success('Bing', outText)
         await func.send(outText)
-    if mode ==2:
-        return text.replace(r'.*\.AIP','')
 
 AllAI = {
         'ChatGPT' : Chat,
@@ -242,7 +247,7 @@ cookies_file_path="./cookies.json" # 设置:https://github.com/thx114/SDGPT/wiki
             raise Exception
         chatbot = chatGPT(config={"access_token": cfg['access_token']})
         botList.append('ChatGPT')
-        suc('chatGPT','接入 ChatGPT 成功')
+        suc('ChatGPT','接入 ChatGPT 成功')
     except:pass
     try:
         cfg['api_key']
