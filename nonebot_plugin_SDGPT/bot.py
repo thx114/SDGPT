@@ -140,6 +140,11 @@ async def Bing(func,message,mode=1):
     if mode ==2:
         return text.replace(r'.*\.AIP','')
 
+AllAI = {
+        'ChatGPT' : Chat,
+        'Bing' : Bing,
+        'ChatGPT_api' : Chat_api,
+    }
 async def text2image(func,prompt):
     ip = cfg['text2img_proxy'].split(':')
     info('Stable-Diffusion','开始询问 api'+cfg['text2img_proxy'])
@@ -207,7 +212,7 @@ cookies_file_path="./cookies.json" # 设置:https://github.com/thx114/SDGPT/wiki
         # raise Exception('配置文件 config.cfg 未配置')
 
 
-    botList  = []
+    botList = []
 
     info('Presets Load','开始加载预设')
     Presets = {}
@@ -249,5 +254,22 @@ cookies_file_path="./cookies.json" # 设置:https://github.com/thx114/SDGPT/wiki
         suc('ChatGPT api','接入 ChatGPT_api 成功')
     except:pass
     CFGdata['botList']=botList
+    suc('所有AI',str(botList))
+    if cfg['defaultAI'] in botList:
+        ChatUse = AllAI[cfg['defaultAI']]
+        CFGdata['ChatUse']=ChatUse
+    else: 
+        error('Config','你配置的 defaultAI 错误')
+        print(botList)
+        raise Exception('ChatUse error')
+    
     CFGdata['cfg']=cfg
     return CFGdata
+
+
+async def AIcheck(fuc) -> bool:
+    All = AllAI
+    for i in botList:
+        if All[i] == fuc:
+            return True
+    return False
