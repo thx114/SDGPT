@@ -8,7 +8,6 @@ import re
 import html
 from nonebot.log import logger_id
 from nonebot.log import  default_filter
-
 from nonebot import logger
 import webuiapi
 from revChatGPT.V1 import Chatbot as chatGPT
