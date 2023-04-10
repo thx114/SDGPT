@@ -14,6 +14,7 @@ from revChatGPT.V1 import Chatbot as chatGPT
 from revChatGPT.V3 import Chatbot as chatGPT_api
 from EdgeGPT import Chatbot as bing
 import ast
+import nonebot_plugin_gocqhttp
 logger.remove(logger_id)
 
 def formatter(record):
