@@ -5,7 +5,7 @@ import os
 import sys
 import time
 import re
-
+import html
 from nonebot.log import logger_id
 from nonebot.log import  default_filter
 
@@ -45,13 +45,13 @@ logger.level('suc',no=25)
 logger.level('err',no=40)
 logger.level('FBOT',no=20)
 
-def info(app:str,text:str): logger.opt(colors=True).log('FBOT',f"[{app}] {text}")
-def error(app:str,text:str): logger.opt(colors=True).error(f"[{app}] {text}")
-def success(app:str,text:str): logger.opt(colors=True).success(f"[{app}] {text}")
-def warn(app:str,text:str): logger.opt(colors=True).warning(f"[{app}] {text}")
-def debug(app:str,text:str): logger.opt(colors=True).debug(f"[{app}] {text}")
-def suc(app:str,text:str): logger.opt(colors=True).log('suc',f"[{app}] {text}")
-def err(app:str,text:str): logger.opt(colors=True).log('err',f"[{app}] {text}")
+def info(app:str,text:str): logger.opt(colors=True).log('FBOT',f"[{app}] {html.escape(text)}")
+def error(app:str,text:str): logger.opt(colors=True).error(f"[{app}] {html.escape(text)}")
+def success(app:str,text:str): logger.opt(colors=True).success(f"[{app}] {html.escape(text)}")
+def warn(app:str,text:str): logger.opt(colors=True).warning(f"[{app}] {html.escape(text)}")
+def debug(app:str,text:str): logger.opt(colors=True).debug(f"[{app}] {html.escape(text)}")
+def suc(app:str,text:str): logger.opt(colors=True).log('suc',f"[{app}] {html.escape(text)}")
+def err(app:str,text:str): logger.opt(colors=True).log('err',f"[{app}] {html.escape(text)}")
 
 from dotenv import dotenv_values, load_dotenv, set_key
 cfg = {
