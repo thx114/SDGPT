@@ -7,7 +7,7 @@ from nonebot.adapters.onebot.v11 import Bot, MessageSegment
 from nonebot.adapters import Message
 from nonebot.plugin import PluginMetadata
 
-from nonebot.adapters.onebot.v11.event import GroupMessageEvent
+from nonebot.adapters.onebot.v11.event import GroupMessageEvent,PrivateMessageEvent
 from nonebot.params import CommandArg
 from nonebot.rule import to_me
 from .bot import Chat,Bing,text2image,startup,Chat_api,AIcheck
@@ -41,9 +41,9 @@ async def do_something():
 
     
 
-chat = on_command('chat')
+chat = on_command('chat', priority=1, block=True)
 @chat.handle()
-async def _(event:GuildMessageEvent|GroupMessageEvent,args: Message = CommandArg()):
+async def _(event:GuildMessageEvent | GroupMessageEvent | PrivateMessageEvent,args: Message = CommandArg()):
     global ChatUse
     message = args.extract_plain_text()
     if ChatUse == Bing:
@@ -52,27 +52,26 @@ async def _(event:GuildMessageEvent|GroupMessageEvent,args: Message = CommandArg
         elif await AIcheck(Chat):
             ChatUse = Chat
     if type(event) == GuildMessageEvent:await ChatUse(bing,message) # type: ignore
-    elif type(event) == GroupMessageEvent:await ChatUse(bing,message,0) # type: ignore
+    else: await ChatUse(bing,message,0) # type: ignore
 
-bing = on_command('bing')
+bing = on_command('bing', priority=1, block=True)
 @bing.handle()
-async def _(event:GuildMessageEvent|GroupMessageEvent,args: Message = CommandArg()):
+async def _(event:GuildMessageEvent|GroupMessageEvent|PrivateMessageEvent,args: Message = CommandArg()):
     message = args.extract_plain_text()
     if type(event) == GuildMessageEvent:await Bing(bing,message)
-    elif type(event) == GroupMessageEvent:await Bing(bing,message,0)
+    else:await Bing(bing,message,0)
         
 
-
-msg = on_message(rule=to_me())
+msg = on_message(rule=to_me(), priority=2, block=True)
 @msg.handle()
-async def _(event:GuildMessageEvent|GroupMessageEvent):
+async def _(event:GuildMessageEvent|GroupMessageEvent|PrivateMessageEvent):
     global ChatUse
     message = str(event.message)
     if type(event) == GuildMessageEvent:await ChatUse(msg,message) # type: ignore
-    elif type(event) == GroupMessageEvent:await ChatUse(msg,message,0) # type: ignore
+    else:await ChatUse(msg,message,0) # type: ignore
 
 
-tag = on_command('tag')
+tag = on_command('tag', priority=1, block=True)
 @tag.handle()
 async def _(args: Message = CommandArg()):
     message = args.extract_plain_text()
@@ -80,7 +79,7 @@ async def _(args: Message = CommandArg()):
     await ChatUse(tag,Presets['PromptGenerator'] + message,0) # type: ignore
 
 
-ai = on_command('ai')
+ai = on_command('ai', priority=1, block=True)
 @ai.handle()
 async def _(args: Message = CommandArg()):
     message = args.extract_plain_text()
@@ -89,7 +88,7 @@ async def _(args: Message = CommandArg()):
     img_bytes = await text2image(ai,text)
     await ai.reject(MessageSegment.image(file=img_bytes,cache=False))
 
-chatC = on_command('切换AI')
+chatC = on_command('切换AI', priority=1, block=True)
 @chatC.handle()
 async def _(args: Message = CommandArg()):
     All = {
