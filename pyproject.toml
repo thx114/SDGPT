@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot-plugin-SDGPT"
-version = "0.1.6"
+version = "0.1.7"
 description = "ChatBot for NoneBot : 链接 ChatGPT / Bing / Stable-Diffusion : ChatGPT Bing聊天, gpt解析自然语言转Stable-Diffusion生成图像"
 license = "MIT"
 authors = ["F_thx <thx1140093097@gmail.com>"]
@@ -10,7 +10,7 @@ repository = "https://github.com/thx114/SDGPT"
 documentation = "https://github.com/thx114/SDGPTreadme"
 keywords = ["nonebot", "nonebot2", "chatgpt", "new bing","Stable-Diffusion"]
 packages = [
-    { include = "nonebot_plugin_SDGPT/*.py", from = ".." }
+    { include = "nonebot_plugin_SDGPT/*.py"}
 ]
 
 [tool.poetry.dependencies]

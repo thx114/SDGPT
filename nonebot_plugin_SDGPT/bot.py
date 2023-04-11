@@ -14,7 +14,6 @@ from revChatGPT.V1 import Chatbot as chatGPT
 from revChatGPT.V3 import Chatbot as chatGPT_api
 from EdgeGPT import Chatbot as bing
 import ast
-import nonebot_plugin_gocqhttp
 logger.remove(logger_id)
 
 def formatter(record):
@@ -99,7 +98,7 @@ async def Chat(func,message:str,mode=1):
     
 async def Chat_api(func,message:str,mode=1):
     if not message or len(message)<1:return
-    Rtime = cfg['Chat_stream_waitTime']
+    Rtime = int(cfg['Chat_stream_waitTime'])
     endStr = ast.literal_eval(cfg['Chat_stream_endStr'])
     text = ''
     info('ChatGPT api','开始询问 api')
@@ -156,7 +155,6 @@ async def text2image(func,prompt):
     ip = cfg['text2img_proxy'].split(':')
     info('Stable-Diffusion','开始询问 api'+cfg['text2img_proxy'])
     api = webuiapi.WebUIApi(host=ip[0], port=ip[1]) # type: ignore
-    
     result1 = api.txt2img(
         prompt=prompt,
         negative_prompt=cfg['text2img_negative_prompt'],
