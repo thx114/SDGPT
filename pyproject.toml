@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot-plugin-SDGPT"
-version = "0.1.9"
+version = "0.2.1"
 description = "ChatBot for NoneBot : 链接 ChatGPT / Bing / Stable-Diffusion : ChatGPT Bing聊天, gpt解析自然语言转Stable-Diffusion生成图像"
 license = "MIT"
 authors = ["F_thx <thx1140093097@gmail.com>"]
@@ -10,10 +10,13 @@ repository = "https://github.com/thx114/SDGPT"
 documentation = "https://github.com/thx114/SDGPTreadme"
 keywords = ["nonebot", "nonebot2", "chatgpt", "new bing","Stable-Diffusion"]
 packages = [
-    { include = "nonebot_plugin_SDGPT/*.py"}
+    { include = "nonebot_plugin_SDGPT/*.py"},
+    { include = "nonebot_plugin_SDGPT/*.ini"},
+    { include = "nonebot_plugin_SDGPT/lib/*.py"}
 ]
 
 [tool.poetry.dependencies]
+
 python = "^3.8"
 nonebot2 = "^2.0.0-beta.1"
 python-dotenv = "*"
@@ -22,6 +25,9 @@ EdgeGPT = "*"
 webuiapi = "*"
 nonebot-plugin-guild-patch ="*"
 nonebot-adapter-onebot = { version = "^2.0.0-beta.1", optional = true }
+websockets = "^10.0"
+aiofiles = "*"
+configobj = "*"
 
 [tool.poetry.extras]
 onebot = ["nonebot-adapter-onebot"]
