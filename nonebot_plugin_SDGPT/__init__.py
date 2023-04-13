@@ -1,106 +1,198 @@
-from nonebot import get_driver, require
+import asyncio
+import os
+import time
+from io import BytesIO
 
-
-from .bot import info,error,warn,err
-from nonebot.plugin import on_command , on_message , on
+from nonebot import on_command
 from nonebot.adapters.onebot.v11 import Bot, MessageSegment
-from nonebot.adapters import Message
-from nonebot.plugin import PluginMetadata
+from .bot import bot_start, msg_end, Chat
+from .lib.cons import *
+from .lib.utils import load_preset
+from webuiapi import webuiapi
 
-from nonebot.adapters.onebot.v11.event import GroupMessageEvent,PrivateMessageEvent
-from nonebot.params import CommandArg
-from nonebot.rule import to_me
-from .bot import Chat,Bing,text2image,startup,Chat_api,AIcheck
+cfg = asyncio.run(bot_start())
+config = cfg['cfg']
 
-from dotenv import dotenv_values, load_dotenv
-config =dotenv_values(".cfg")
+BotUse = config['Chat']['defaultAI']
 
-__plugin_meta__ = PluginMetadata(
-    name="ChatBot",
-    description="ChatBot for NoneBot : 链接 ChatGPT / Bing / Stable-Diffusion",
-    usage="ChatGPT Bing聊天, gpt解析自然语言转Stable-Diffusion生成图像",
-    extra={},
-)
 
-GuildMessageEvent = require('nonebot_plugin_guild_patch').GuildMessageEvent
+@event_postprocessor
+async def postprocessor():
+    await msg_end()
 
-driver = get_driver()
 
-@driver.on_startup
-async def do_something():
-    global Presets
-    global botList  
-    global cfg
-    global ChatUse
-    info('fthxbot','startup')
-    CFGdata = await startup()
-    Presets = CFGdata['Presets']
-    botList = CFGdata['botList']
-    cfg = CFGdata['cfg']
-    ChatUse = CFGdata['ChatUse']
+chat = on_command(config['Command']['chat'][1:])
+bing = on_command(config['Command']['bing'][1:])
+switchAI = on_command(config['Command']['switchAI'][1:])
+switch = on_command(config['Command']['switch'][1:])
+switchPreset = on_command(config['Command']['switchPreset'][1:])
+tag = on_command(config['Command']['tag'][1:])
+SD_webui = on_command(config['Command']['SD_webui'][1:])
 
-    
 
-chat = on_command('chat', priority=1, block=True)
 @chat.handle()
-async def _(event:GuildMessageEvent | GroupMessageEvent | PrivateMessageEvent,args: Message = CommandArg()):
-    global ChatUse
-    message = args.extract_plain_text()
-    if ChatUse == Bing:
-        if await AIcheck(Chat_api):
-            ChatUse = Chat_api
-        elif await AIcheck(Chat):
-            ChatUse = Chat
-    if type(event) == GuildMessageEvent:await ChatUse(bing,message) # type: ignore
-    else: await ChatUse(bing,message,0) # type: ignore
+async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMessageEvent, args: Message = CommandArg()):
+    def asChatGPT():
+        global BotUse
+        if 'chatgpt' in BotUse:
+            return BotUse
+        else:
+            if 'chatgpt-api' in cfg:
+                return 'chatgpt-api'
+            elif 'chatgpt' in cfg:
+                return 'chatgpt'
+            else:
+                error('/chat', '你没有任何chatgpt接入')
+        return False
 
-bing = on_command('bing', priority=1, block=True)
+    message = args.extract_plain_text()
+    if len(message) == 0: return
+    BOT = asChatGPT()
+    if BOT:
+        info(BOT, '对话: ' + message)
+        await Chat(event, foo, BOT, message)
+
+
 @bing.handle()
-async def _(event:GuildMessageEvent|GroupMessageEvent|PrivateMessageEvent,args: Message = CommandArg()):
-    message = args.extract_plain_text()
-    if type(event) == GuildMessageEvent:await Bing(bing,message)
-    else:await Bing(bing,message,0)
-        
+async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMessageEvent, args: Message = CommandArg()):
+    def asBing():
+        global BotUse
+        if 'bing' not in cfg:
+            error('bing', '你没有接入bing')
+            return False
 
-msg = on_message(rule=to_me(), priority=2, block=True)
-@msg.handle()
-async def _(event:GuildMessageEvent|GroupMessageEvent|PrivateMessageEvent):
-    global ChatUse
-    message = str(event.message)
-    if type(event) == GuildMessageEvent:await ChatUse(msg,message) # type: ignore
-    else:await ChatUse(msg,message,0) # type: ignore
+    if asBing():
+        message = args.extract_plain_text()
+        if len(message) == 0: return
+        info('bing', '对话: ' + message)
+        await Chat(event, foo, 'bing', message)
 
 
-tag = on_command('tag', priority=1, block=True)
 @tag.handle()
-async def _(args: Message = CommandArg()):
+async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMessageEvent, args: Message = CommandArg()):
+    def asChat():
+        global BotUse
+        if BotUse in cfg:
+            return BotUse
+        else:
+            if 'chatgpt-api' in cfg: return 'chatgpt-api'
+            if 'chatgpt' in cfg: return 'chatgpt'
+            if 'bing' in cfg: return 'bing'
+            error('/chat', '你没有任何chatgpt接入')
+            return False
+
+    BOT = asChat()
     message = args.extract_plain_text()
-    global ChatUse
-    await ChatUse(tag,Presets['PromptGenerator'] + message,0) # type: ignore
+    if len(message) == 0: return
+    if BOT:
+        info(BOT, '对话: ' + message)
+        await Chat(event, foo, BOT, message, noStream=True, p='tag')
 
 
-ai = on_command('ai', priority=1, block=True)
-@ai.handle()
-async def _(args: Message = CommandArg()):
+@SD_webui.handle()
+async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMessageEvent, args: Message = CommandArg()):
+    def asChat():
+        global BotUse
+        if BotUse in cfg:
+            return BotUse
+        else:
+            if 'chatgpt-api' in cfg: return 'chatgpt-api'
+            if 'chatgpt' in cfg: return 'chatgpt'
+            if 'bing' in cfg: return 'bing'
+            error('/chat', '你没有任何chatgpt接入')
+            return False
+
+    BOT = asChat()
     message = args.extract_plain_text()
-    global ChatUse
-    text = await ChatUse(tag,Presets['PromptGenerator'] + message,2) # type: ignore
-    img_bytes = await text2image(ai,text)
-    await ai.reject(MessageSegment.image(file=img_bytes,cache=False))
+    if len(message) == 0: return
+    if BOT:
+        info(BOT, '对话: ' + message)
+        prompt = await Chat(event, foo, BOT, message, p='tag', noOut=True)
+        sd = config['Stable-Diffusion']
+        ip = sd['api_host']
+        DIR = sd['save_path']
+        info('Stable-Diffusion', '开始询问 api : ' + ip)
+        ip = ip.split(':')
+        api = webuiapi.WebUIApi(host=ip[0], port=ip[1])  # type: ignore
 
-chatC = on_command('切换AI', priority=1, block=True)
-@chatC.handle()
-async def _(args: Message = CommandArg()):
-    All = {
-        'ChatGPT' : Chat,
-        'Bing' : Bing,
-        'ChatGPT_api' : Chat_api,
-    }
-    message = args.extract_plain_text()
-    global ChatUse
-    ChatUse = All[message]
-    if not await AIcheck(ChatUse) :
-        err('ChatUse','AI不存在')
-        return await chatC.send('AI不存在')
-    await chatC.send(f'已切换到 {message}')
+        result1 = api.txt2img(
+            prompt=prompt,
+            negative_prompt=sd['negative_prompt'],
+            steps=sd['step'],
+        )
+        image = result1.image
+        success('Stable-Diffusion', '返回图片')
+        buffered = BytesIO()
+        if DIR == '':
+            DIR = '.'
+            ID = 'OUT'
+        else:
+            lt = time.localtime(time.time())
+            ID = time.strftime("%Y_%m_%d_%H%M%S", lt)
+        image.save(f"{DIR}/{ID}.png", "PNG")
+        image.save(buffered, format="PNG")
+        await foo.send(event, MessageSegment.image(buffered), reply_message=config['Chat']['reply'])
+        return
 
+
+
+@switchAI.handle()
+async def _(foo: Bot, event: Event, args: Message = CommandArg()):
+    use = args.extract_plain_text()
+    if len(args) == 0: return
+    if use in config:
+        global BotUse
+        BotUse = use
+        await switchAI.send('已切换到 ' + BotUse)
+        suc('切换AI', BotUse)
+    else:
+        await switchAI.send('AI不存在')
+        warn("切换AI", f'AI不存在 , {use} is not in: {cfg}')
+
+
+@switch.handle()
+async def _(event: Event, args: Message = CommandArg()):
+    global config
+    args = args.extract_plain_text().split(' ')
+    if len(args) == 0: return
+    path = args[:-2]
+    isOwner = (config['Bot']['owner'] == event.get_user_id())
+    if config['Bot']['switchConfigEval'] is False and not isOwner:
+        return warn('/switch', '无权限更改')
+    if args[0] == 'Bot' and not isOwner:
+        return warn('/switch', '无权限更改 Bot')
+    now = config
+    for i in path:
+        now = now[i]
+    if args[-1] in ['True', 'true', '1', 'on']:
+        data = True
+    elif args[-1] in ['False', 'false', '0', 'off']:
+        data = False
+    else:
+        data = args[-1]
+    now[args[-2]] = data
+    config.write()
+    print(config['Chat'])
+    await switch.send('.'.join(args[:-1]) + '已改为' + str(data))
+
+
+@switchPreset.handle()
+async def _(event: Event, args: Message = CommandArg()):
+    global config
+    args = args.extract_plain_text()
+    if len(args) == 0: return
+    isOwner = (config['Bot']['owner'] == event.get_user_id())
+    if config['Bot']['switchConfigEval'] is False and not isOwner:
+        return warn('/switch', '无权限更改')
+    if args in config['preset']:
+        config['runtime']['preset'] = config['preset'][args]
+        path = config['Chat']['presets_dir'] + '/' + config['preset'][args]
+        # config['runtime']['preset'] = await load_preset(config['Chat']['presets_dir'], config['preset'][args])
+        await switchPreset.send(f'已切换到{path}')
+        config.write()
+    elif args in ['None', 'none', '0', 'false', 'False', 'default']:
+        config['runtime']['preset'] = ''
+        config.write()
+    else:
+        await switchPreset.send('预设不存在，请在配置中注册')
+        return error('/switchPreset', '预设不存在，请在配置中注册')
