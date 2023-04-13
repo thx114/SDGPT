@@ -26,6 +26,10 @@ nb plugin install nonebot-plugin-SDGPT
 ```
 python -m pip install nonebot-plugin-SDGPT
 ```
+
+注意: 在你的 nonebot 机器人目录下的预设文件夹中应该需要一个默认的用于生成绘图 tag 的 预设,在此获取: 
+- https://github.com/thx114/SDGPT-BOT/tree/main/presets
+
 > 如果你没有使用过NoneBot,  
 > 这里有一个现成的NoneBot基于SDGPT机器人:  
 > [**SDGPT-BOT**](https://github.com/thx114/SDGPT-BOT)
