@@ -10,6 +10,11 @@
   > 基于 chatGPT 或 bing 解析自然语言转 Stable-Diffusion 生成图像
 - [x] qq 频道支持 
   > qq 频道下 chatGPT bing 的对话会分段发送
+- [x] 预设切换
+- [x] 自定义预设
+- [x] 详细的指令配置
+
+ **指令**: [***SDGPT-Command***](https://github.com/thx114/SDGPT/wiki/%E6%8C%87%E4%BB%A4)
 ## 使用
 
 - Python >= 3.10
