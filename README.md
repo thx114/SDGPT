@@ -41,5 +41,5 @@ python -m pip install nonebot-plugin-SDGPT
    
 [**NoneBot**](https://v2.nonebot.dev/)  
 [**ChatGPT**](https://github.com/acheong08/ChatGPT)  
-[**BingGPT**](https://github.com/dice2o/BingGPT)  
+[**EdgeGPT**]https://github.com/acheong08/EdgeGPT)  
 [**SD-api**](https://github.com/mix1009/sdwebuiapi)  
