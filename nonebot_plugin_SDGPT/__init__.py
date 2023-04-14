@@ -1,13 +1,14 @@
 import asyncio
 import os
+import re
 import time
 from io import BytesIO
 
-from nonebot import on_command
+from nonebot import on_command, on_message
 from nonebot.adapters.onebot.v11 import Bot, MessageSegment
 from .bot import bot_start, msg_end, Chat
 from .lib.cons import *
-from .lib.utils import load_preset
+from .lib.utils import load_preset, rules, getThis
 from webuiapi import webuiapi
 
 cfg = asyncio.run(bot_start())
@@ -21,17 +22,44 @@ async def postprocessor():
     await msg_end()
 
 
-chat = on_command(config['Command']['chat'][1:])
-bing = on_command(config['Command']['bing'][1:])
-switchAI = on_command(config['Command']['switchAI'][1:])
-switch = on_command(config['Command']['switch'][1:])
-switchPreset = on_command(config['Command']['switchPreset'][1:])
-tag = on_command(config['Command']['tag'][1:])
-SD_webui = on_command(config['Command']['SD_webui'][1:])
+L_webuiapi = asyncio.Lock()
+chat = on_command(config['Command']['chat'][1:], priority=1, block=True)
+bing = on_command(config['Command']['bing'][1:], priority=1, block=True)
+switchAI = on_command(config['Command']['switchAI'][1:], priority=1, block=True)
+switch = on_command(config['Command']['switch'][1:], priority=1, block=True)
+switchPreset = on_command(config['Command']['switchPreset'][1:], priority=1, block=True)
+tag = on_command(config['Command']['tag'][1:], priority=1, block=True)
+SD_webui = on_command(config['Command']['SD_webui'][1:], priority=1, block=True)
+MSG = on_message(rule=to_me(), priority=2, block=True)
+
+
+@MSG.handle()
+async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMessageEvent):
+    if not rules('msg', config, event): return
+
+    def asChat():
+        global BotUse
+        if BotUse in cfg:
+            return BotUse
+        else:
+            if 'chatgpt-api' in cfg: return 'chatgpt-api'
+            if 'chatgpt' in cfg: return 'chatgpt'
+            if 'bing' in cfg: return 'bing'
+            error('/chat', '你没有任何chatgpt接入')
+            return False
+
+    message = str(event.message)
+    BOT = asChat()
+    if len(message) == 0: return
+    if BOT:
+        info(BOT, '对话: ' + message)
+        await Chat(event, foo, BOT, message)
 
 
 @chat.handle()
 async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMessageEvent, args: Message = CommandArg()):
+    if not rules('chat', config, event): return
+
     def asChatGPT():
         global BotUse
         if 'chatgpt' in BotUse:
@@ -55,11 +83,13 @@ async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMess
 
 @bing.handle()
 async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMessageEvent, args: Message = CommandArg()):
+    if not rules('bing', config, event): return
+
     def asBing():
-        global BotUse
         if 'bing' not in cfg:
             error('bing', '你没有接入bing')
-            return False
+            return True
+        return 'bing'
 
     if asBing():
         message = args.extract_plain_text()
@@ -70,6 +100,7 @@ async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMess
 
 @tag.handle()
 async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMessageEvent, args: Message = CommandArg()):
+    if not rules('tag', config, event): return
     def asChat():
         global BotUse
         if BotUse in cfg:
@@ -91,6 +122,7 @@ async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMess
 
 @SD_webui.handle()
 async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMessageEvent, args: Message = CommandArg()):
+    if not rules('SD_webui', config, event): return
     def asChat():
         global BotUse
         if BotUse in cfg:
@@ -113,14 +145,17 @@ async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMess
         DIR = sd['save_path']
         info('Stable-Diffusion', '开始询问 api : ' + ip)
         ip = ip.split(':')
+
         api = webuiapi.WebUIApi(host=ip[0], port=ip[1])  # type: ignore
 
-        result1 = api.txt2img(
+        task = asyncio.to_thread(api.txt2img(
             prompt=prompt,
             negative_prompt=sd['negative_prompt'],
             steps=sd['step'],
-        )
-        image = result1.image
+        ))
+        async with L_webuiapi:
+            result = await task
+        image = result.image
         success('Stable-Diffusion', '返回图片')
         buffered = BytesIO()
         if DIR == '':
@@ -135,9 +170,9 @@ async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMess
         return
 
 
-
 @switchAI.handle()
 async def _(foo: Bot, event: Event, args: Message = CommandArg()):
+    if not rules('switchAI', config, event): return
     use = args.extract_plain_text()
     if len(args) == 0: return
     if use in config:
@@ -153,8 +188,12 @@ async def _(foo: Bot, event: Event, args: Message = CommandArg()):
 @switch.handle()
 async def _(event: Event, args: Message = CommandArg()):
     global config
+    if not rules('switch', config, event): return
     args = args.extract_plain_text().split(' ')
     if len(args) == 0: return
+    if args[0] == '群聊': args = ['Function','Group','groups',args[-1]]
+    if args[0] == '私聊': args = ['Function','Private','member',args[-1]]
+    if args[0] == '频道': args = ['Function', 'Guild', 'guilds', args[-1]]
     path = args[:-2]
     isOwner = (config['Bot']['owner'] == event.get_user_id())
     if config['Bot']['switchConfigEval'] is False and not isOwner:
@@ -168,8 +207,30 @@ async def _(event: Event, args: Message = CommandArg()):
         data = True
     elif args[-1] in ['False', 'false', '0', 'off']:
         data = False
+    elif args[-1] == '=this':
+        data = [getThis(event)]
+    elif args[-1] == '*':
+        data = ['*']
+    elif args[-1] == '+this':
+        if '*' in now[args[-2]]:
+            now[args[-2]].remove('*')
+        now[args[-2]].append(getThis(event))
+        data = now[args[-2]]
+    elif args[-1] == '-this':
+        try:
+            now[args[-2]].remove(getThis(event))
+        except:
+            return await switch.send('.'.join(args[:-1]) + '中没有' + str(getThis(event)))
+        data = now[args[-2]]
     else:
         data = args[-1]
+    if not isinstance(now[args[-2]], (int, float, str, bool, list)):
+        rep = {"'(access_token)': '[^’]*'": r"[$1]",
+               "'(api_key)': '[^']*'": r"[$2]",
+               "'(api_host)': '[^']*'": r"[$3]",
+        }
+        result = re.sub("|".join(rep.keys()), '[隐藏]', str(now[args[-2]]))
+        return await switch.send(result)
     now[args[-2]] = data
     config.write()
     print(config['Chat'])
@@ -179,6 +240,7 @@ async def _(event: Event, args: Message = CommandArg()):
 @switchPreset.handle()
 async def _(event: Event, args: Message = CommandArg()):
     global config
+    if not rules('switchPreset', config, event): return
     args = args.extract_plain_text()
     if len(args) == 0: return
     isOwner = (config['Bot']['owner'] == event.get_user_id())

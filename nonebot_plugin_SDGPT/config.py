@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import json
 import os
-
+from typing import NewType, Any
 from .lib.cons import *
 from configobj import ConfigObj
 from validate import Validator
@@ -12,10 +13,66 @@ from revChatGPT.V3 import Chatbot as chatGPT_api
 from EdgeGPT import Chatbot as Bing
 
 
+def Proxy(DIR):
+    if DIR['proxy'] and DIR['proxy'] != '':
+        return DIR['proxy']
+
+
+async def load_chatgpt(DIR, outData):
+    if not DIR['access_token'] or DIR['access_token'] == '':
+        warn('配置检查', f'你设定的 chatgpt 的 access_token 为空，跳过载入')
+        return ''
+    else:
+        add = ''
+        bot = chatGPT(config={"access_token": DIR['access_token']})
+        proxy = Proxy(DIR)
+        if proxy:
+            bot.config['proxy'] = proxy
+            add = f',代理: {proxy}'
+        suc('chatgpt', f'ChatGPT(网页): 已加载{add}')
+        outData['chatgpt'] = bot
+        return 'chatgpt'
+
+
+async def load_chatgpt_api(DIR, outData):
+    if not DIR['api_key'] or DIR['api_key'] == '' or ('sk-' not in DIR['api_key']):
+        warn('配置检查', f'你设定的 chatgpt_api 的 api_key 为空或不合法，跳过载入')
+        return ''
+    else:
+        add = ''
+        bot = chatGPT_api(api_key=DIR['api_key'])
+        proxy = Proxy(DIR)
+        if proxy:
+            bot.proxy = proxy
+            add = f',代理: {proxy}'
+        suc('chatgpt-api', f'ChatGPT(api): 已加载{add}')
+        outData['chatgpt-api'] =bot
+        return 'chatgpt-api'
+
+
+async def load_bing(DIR, outData):
+    if not DIR['cookies_file_path'] or DIR['cookies_file_path'] == '':
+        warn('配置检查', f'你设定的 bing 的 cookies_file_path 为空，跳过载入')
+        return ''
+    else:
+        add = ''
+        try:
+            with open(DIR['cookies_file_path'], 'r') as f:
+                cookies = json.load(f)
+                bot = Bing(cookies=cookies)
+            proxy = Proxy(DIR)
+            if proxy:
+                bot.proxy = proxy
+                add = f',代理: {proxy}'
+            suc('bing', f'Bing: 已加载{add}')
+            outData['bing'] = bot
+            return 'bing'
+        except:
+            warn('配置检查', 'bing cookies.json 加载失败,无法使用bing')
+            return ''
+
 
 async def load():
-
-    outData = {}
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'configspec.ini')
     config = ConfigObj('config.cfg', encoding='utf-8', default_encoding='utf-8', configspec=path,
                        indent_type=' ', write_empty_values=True)
@@ -36,47 +93,17 @@ async def load():
     })
     config.validate(validator, copy=True, preserve_errors=True)
     config.write()
-    botList = []
-    # check AIs
-    if config['AI']['chatgpt']['access_token'] == '':
-        warn('配置检查', 'chatgpt access_token 为空,无法使用chatGPT(网页模式)')
-    else:
-        botList.append('chatgpt')
-        outData['chatgpt'] = chatGPT(config={"access_token": config['AI']['chatgpt']['access_token']})
-        if config['AI']['chatgpt']['proxy'] and config['AI']['chatgpt']['proxy'] != '':
-            outData['chatgpt'].config['proxy'] = config['AI']['chatgpt']['proxy']
-        suc('chatgpt', 'ChatGPT(网页)已加载')
-    if config['AI']['chatgpt-api']['api_key'] == '':
-        warn('配置检查', 'chatgpt-api api_key 为空,无法使用chatGPT(api模式)')
-    else:
-        botList.append('chatgpt-api')
-        outData['chatgpt-api'] = chatGPT_api(api_key=config['AI']['chatgpt-api']['api_key'])
-        if config['AI']['chatgpt-api']['proxy'] and config['AI']['chatgpt-api']['proxy'] != '':
-            outData['chatgpt-api'].proxy = config['AI']['chatgpt-api']['proxy']
-        suc('chatgpt-api', 'ChatGPT(api)已加载')
-    try:
-        with open(config['AI']['bing']['cookies_file_path'], 'r') as f:
-            cookies = json.load(f)
-            botList.append('bing')
-            outData['bing'] = Bing(cookies=cookies)
-            if config['AI']['bing']['proxy'] and config['AI']['bing']['proxy'] != '':
-                outData['bing'].proxy = config['AI']['bing']['proxy']
-            suc('bing', '已加载')
-    except:
-        warn('配置检查', 'bing cookies.json 加载失败,无法使用bing')
+    outData = {}
+    botList = [await load_chatgpt(config['AI']['chatgpt'], outData),
+               await load_chatgpt_api(config['AI']['chatgpt-api'], outData),
+               await load_bing(config['AI']['bing'], outData)]
+    botList = [x for x in botList if len(x)>0]
     if len(botList) > 0:
         suc('所有AI', '已加载' + str(len(botList)) + '个AI: ' + ','.join(botList))
     else:
         error('配置检查', '没有一个AI成功被加载')
     outData['cfg'] = config
     outData['bots'] = botList
-    #
-    outData['cmd'] = {
-        'bing': 'bing',
-        'chat': 'chat',
-        'ai': 'ai',
-        'tag': 'tag',
-    }
     for item in config['preset']:
         key = item
         val = config['Chat']['presets_dir'] + '/' + config['preset'][item]

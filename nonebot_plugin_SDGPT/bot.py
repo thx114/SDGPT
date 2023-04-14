@@ -2,6 +2,9 @@ import asyncio
 import os
 import re
 import time
+
+from celery import Celery
+
 from .lib.cons import *
 from .lib.base import *
 from .lib.utils import load_preset
@@ -15,14 +18,11 @@ global bing
 global config
 global defaultAI
 
-runs = {
-    'chatgpt': False,
-    'chatgpt-api': False,
-    'bing': False,
-}
-
 
 async def bot_start():
+    global L_chatgpt
+    global L_chatgpt_api
+    global L_bing
     global chatgpt
     global chatgpt_api
     global bing
@@ -38,6 +38,10 @@ async def bot_start():
         config.write()
     defaultAI = config['Chat']['defaultAI']
 
+    L_chatgpt = asyncio.Lock()
+    #L_chatgpt_api = asyncio.Lock()
+    L_bing = asyncio.Lock()
+
     return cfg
 
 
@@ -46,7 +50,6 @@ async def msg_end():
 
 
 async def Chat(event, foo, BOT, message, p='', noStream=False, noOut=False):
-    global runs
     if noOut:
         noStream = True
     if len(p) == 0 and len(config['runtime']['preset']) > 2:
@@ -64,41 +67,37 @@ async def Chat(event, foo, BOT, message, p='', noStream=False, noOut=False):
         stream = config['Function']['Private']['stream']
     else:
         return
-    while runs[BOT] is True:
-        await asyncio.sleep(1)
-
-    if runs[BOT] is False:
-        runs[BOT] = True
+    if noStream:
+        stream = False
+    if stream:
+        await ask_stream(event, foo, BOT, message, p)
+    else:
+        out = await ask(BOT, message, p)
         if noStream:
-            stream = False
-        if stream:
-            await ask_stream(event, foo, BOT, message, p)
-        else:
-            out = await ask(BOT, message, p)
-            if noStream:
-                out = re.sub(r".*\.AIP", "", out)
-            if noOut:
-                return out
-            await foo.send(event, out, reply_message=reply)
-            runs[BOT] = False
+            out = re.sub(r".*\.AIP", "", out)
+        if noOut:
+            return out
+        await foo.send(event, out, reply_message=reply)
 
 
 async def ask(bot, message, prompt=''):
     if bot == 'chatgpt':
-        if len(prompt) > 1: message = promptBase.replace("$prompt$", prompt) + message
-        info('ASK', message)
-        async for data in chatgpt.ask(message):
-            out = data['message']
-        return out
+        async with L_chatgpt:
+            if len(prompt) > 1: message = promptBase.replace("$prompt$", prompt) + message
+            info('ASK', message)
+            async for data in chatgpt.ask(message):
+                out = data['message']
+            return out
     if bot == 'chatgpt-api':
         chatgpt_api.system_prompt = prompt
         out = await chatgpt_api.ask_async(message)
         return out
     if bot == 'bing':
-        if len(prompt) > 1: message = promptBase + message
-        out = await bing.ask(message)
-        out = out['item']['messages'][-1]['text']
-        return out
+        async with L_bing:
+            if len(prompt) > 1: message = promptBase + message
+            out = await bing.ask(message)
+            out = out['item']['messages'][-1]['text']
+            return out
 
 
 async def ask_stream(event, func, bot, message, prompt=''):
@@ -131,25 +130,28 @@ async def ask_stream(event, func, bot, message, prompt=''):
             return False
 
     if bot == 'chatgpt':
-        if len(prompt) > 1: message = promptBase.replace("$prompt$", prompt) + message
-        async for data in chatgpt.ask(message):
-            text = data['message']
-            isEnd = await stream_process('chatgpt')
-            if isEnd and len(text.replace(before, '').replace(' ', '')) > 1:
-                await stream_process('chatgpt', text)
+        async with L_chatgpt:
+            if len(prompt) > 1: message = promptBase.replace("$prompt$", prompt) + message
+            async for data in chatgpt.ask(message):
+                text = data['message']
+                isEnd = await stream_process('chatgpt')
+                if isEnd and len(text.replace(before, '').replace(' ', '')) > 1:
+                    await stream_process('chatgpt', text)
     if bot == 'chatgpt-api':
-        chatgpt_api.system_prompt = prompt
-        async for data in chatgpt_api.ask_stream_async(message):
-            text += data
-            isEnd = await stream_process('chatgpt-api')
-            if isEnd and len(text.replace(before, '').replace(' ', '')) > 1:
-                await stream_process('chatgpt-api', text)
+        async with L_chatgpt_api:
+            chatgpt_api.system_prompt = prompt
+            async for data in chatgpt_api.ask_stream_async(message):
+                text += data
+                isEnd = await stream_process('chatgpt-api')
+                if isEnd and len(text.replace(before, '').replace(' ', '')) > 1:
+                    await stream_process('chatgpt-api', text)
     if bot == 'bing':
-        if len(prompt) > 1: message = promptBase + message
-        async for data in bing.ask_stream(message):
-            isTrue, textdata = data
-            if type(textdata) == str:
-                text = textdata
-                await stream_process('Bing')
-            else:
-                await stream_process('bing', text)
+        async with L_bing:
+            if len(prompt) > 1: message = promptBase + message
+            async for data in bing.ask_stream(message):
+                isTrue, textdata = data
+                if type(textdata) == str:
+                    text = textdata
+                    await stream_process('Bing')
+                else:
+                    await stream_process('bing', text)
