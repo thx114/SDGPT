@@ -14,7 +14,7 @@
 - [x] 自定义预设
 - [x] 详细的指令配置
 
- **指令**: [***SDGPT-Command***](https://github.com/thx114/SDGPT/wiki/%E6%8C%87%E4%BB%A4)
+ **指令与功能**: [***SDGPT-Command***](https://github.com/thx114/SDGPT/wiki/%E6%8C%87%E4%BB%A4-%E4%B8%8E-%E5%8A%9F%E8%83%BD)
 ## 使用
 
 - Python >= 3.10
