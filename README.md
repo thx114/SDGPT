@@ -18,6 +18,10 @@
 
  **指令与功能**: [***SDGPT-CommandAndFunction***](https://github.com/thx114/SDGPT/wiki/%E6%8C%87%E4%BB%A4-%E4%B8%8E-%E5%8A%9F%E8%83%BD)
 ## 使用
+> 如果你没有使用过NoneBot,  
+> 这里有一个现成的NoneBot基于SDGPT机器人:  
+> [**SDGPT-BOT**](https://github.com/thx114/SDGPT-BOT)
+>
 
 - Python >= 3.10
 - 方式一：使用`nb-cli`安装插件  
@@ -32,10 +36,7 @@ python -m pip install nonebot-plugin-SDGPT
 注意: 在你的 nonebot 机器人目录下的预设文件夹中应该需要一个默认的用于生成绘图 tag 的 预设,在此获取: 
 - https://github.com/thx114/SDGPT-BOT/tree/main/presets
 
-> 如果你没有使用过NoneBot,  
-> 这里有一个现成的NoneBot基于SDGPT机器人:  
-> [**SDGPT-BOT**](https://github.com/thx114/SDGPT-BOT)
->
+
 ## more
 
 [**QQ 群 391517834**](https://jq.qq.com/?_wv=1027&k=eKsgovej)  
