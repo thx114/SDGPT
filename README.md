@@ -3,15 +3,17 @@
   
  
 ## 功能
-链接 ChatGPT / Bing / Stable-Diffusion  :   
-- [x] ChatGPT对话 
-- [x] Bing对话
+链接 ChatGPT / Bing / Poe / Stable-Diffusion  :   
+- [x] ChatGPT 对话 
+- [x] Bing 对话
+- [x] Poe 对话
 - [x] Stable-Diffusion 文生图  
   > 基于 chatGPT 或 bing 解析自然语言转 Stable-Diffusion 生成图像
 - [x] qq 频道支持 
   > qq 频道下 chatGPT bing 的对话会分段发送
 - [x] 预设切换
 - [x] 自定义预设
+- [x] 切换模型
 - [x] 详细的指令配置
 
  **指令与功能**: [***SDGPT-CommandAndFunction***](https://github.com/thx114/SDGPT/wiki/%E6%8C%87%E4%BB%A4-%E4%B8%8E-%E5%8A%9F%E8%83%BD)
