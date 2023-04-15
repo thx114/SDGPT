@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "nonebot-plugin-SDGPT"
-version = "0.2.1"
-description = "ChatBot for NoneBot : 链接 ChatGPT / Bing / Stable-Diffusion : ChatGPT Bing聊天, gpt解析自然语言转Stable-Diffusion生成图像"
+version = "0.2.3"
+description = "ChatBot for NoneBot : 链接 ChatGPT / Bing / Poe / Stable-Diffusion : ChatGPT Bing poe聊天, gpt解析自然语言转Stable-Diffusion生成图像"
 license = "MIT"
 authors = ["F_thx <thx1140093097@gmail.com>"]
 readme = "README.md"
@@ -28,6 +28,8 @@ nonebot-adapter-onebot = { version = "^2.0.0-beta.1", optional = true }
 websockets = "^10.0"
 aiofiles = "*"
 configobj = "*"
+poe-api = "*"
+
 
 [tool.poetry.extras]
 onebot = ["nonebot-adapter-onebot"]

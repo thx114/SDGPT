@@ -114,6 +114,8 @@ def check_token(value):
     es(value, 'access_token不合法')
     raise ValueError
 
+def check_poetoken(value):
+    return value
 
 def ip_test_switch(value):
     global switch
@@ -124,7 +126,7 @@ def ip_test_switch(value):
     return value
 
 
-def check_model(value: str):
+def check_model(value):
     return value
 
 

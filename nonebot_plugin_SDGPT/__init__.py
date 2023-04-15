@@ -8,13 +8,13 @@ from nonebot import on_command, on_message
 from nonebot.adapters.onebot.v11 import Bot, MessageSegment
 from .bot import bot_start, msg_end, Chat
 from .lib.cons import *
-from .lib.utils import load_preset, rules, getThis
+from .lib.base import *
+from .lib.utils import load_preset, rules, getThis, asBot
 from webuiapi import webuiapi
 
 cfg = asyncio.run(bot_start())
 config = cfg['cfg']
-
-BotUse = config['Chat']['defaultAI']
+BotUse = cfg['BotUse']
 
 
 @event_postprocessor
@@ -31,25 +31,15 @@ switchPreset = on_command(config['Command']['switchPreset'][1:], priority=1, blo
 tag = on_command(config['Command']['tag'][1:], priority=1, block=True)
 SD_webui = on_command(config['Command']['SD_webui'][1:], priority=1, block=True)
 MSG = on_message(rule=to_me(), priority=2, block=True)
+poe = on_command(config['Command']['poe'][1:], priority=1, block=True)
+model = on_command(config['Command']['model'][1:], priority=1, block=True)
 
 
 @MSG.handle()
 async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMessageEvent):
     if not rules('msg', config, event): return
-
-    def asChat():
-        global BotUse
-        if BotUse in cfg:
-            return BotUse
-        else:
-            if 'chatgpt-api' in cfg: return 'chatgpt-api'
-            if 'chatgpt' in cfg: return 'chatgpt'
-            if 'bing' in cfg: return 'bing'
-            error('/chat', '你没有任何chatgpt接入')
-            return False
-
     message = str(event.message)
-    BOT = asChat()
+    BOT = asBot(['chatgpt-api', 'chatgpt', 'bing'], BotUse, cfg)
     if len(message) == 0: return
     if BOT:
         info(BOT, '对话: ' + message)
@@ -59,23 +49,9 @@ async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMess
 @chat.handle()
 async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMessageEvent, args: Message = CommandArg()):
     if not rules('chat', config, event): return
-
-    def asChatGPT():
-        global BotUse
-        if 'chatgpt' in BotUse:
-            return BotUse
-        else:
-            if 'chatgpt-api' in cfg:
-                return 'chatgpt-api'
-            elif 'chatgpt' in cfg:
-                return 'chatgpt'
-            else:
-                error('/chat', '你没有任何chatgpt接入')
-        return False
-
     message = args.extract_plain_text()
     if len(message) == 0: return
-    BOT = asChatGPT()
+    BOT = asBot('asChat', BotUse, cfg)
     if BOT:
         info(BOT, '对话: ' + message)
         await Chat(event, foo, BOT, message)
@@ -84,35 +60,29 @@ async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMess
 @bing.handle()
 async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMessageEvent, args: Message = CommandArg()):
     if not rules('bing', config, event): return
-
-    def asBing():
-        if 'bing' not in cfg:
-            error('bing', '你没有接入bing')
-            return True
-        return 'bing'
-
-    if asBing():
+    BOT = asBot(['bing'], BotUse, cfg)
+    if BOT:
         message = args.extract_plain_text()
         if len(message) == 0: return
         info('bing', '对话: ' + message)
         await Chat(event, foo, 'bing', message)
 
 
+@poe.handle()
+async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMessageEvent, args: Message = CommandArg()):
+    if not rules('poe', config, event): return
+    BOT = asBot(['poe'], BotUse, cfg)
+    if BOT:
+        message = args.extract_plain_text()
+        if len(message) == 0: return
+        info('poe', '对话: ' + message)
+        await Chat(event, foo, 'poe', message)
+
+
 @tag.handle()
 async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMessageEvent, args: Message = CommandArg()):
     if not rules('tag', config, event): return
-    def asChat():
-        global BotUse
-        if BotUse in cfg:
-            return BotUse
-        else:
-            if 'chatgpt-api' in cfg: return 'chatgpt-api'
-            if 'chatgpt' in cfg: return 'chatgpt'
-            if 'bing' in cfg: return 'bing'
-            error('/chat', '你没有任何chatgpt接入')
-            return False
-
-    BOT = asChat()
+    BOT = asBot('*', BotUse, cfg)
     message = args.extract_plain_text()
     if len(message) == 0: return
     if BOT:
@@ -123,18 +93,7 @@ async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMess
 @SD_webui.handle()
 async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMessageEvent, args: Message = CommandArg()):
     if not rules('SD_webui', config, event): return
-    def asChat():
-        global BotUse
-        if BotUse in cfg:
-            return BotUse
-        else:
-            if 'chatgpt-api' in cfg: return 'chatgpt-api'
-            if 'chatgpt' in cfg: return 'chatgpt'
-            if 'bing' in cfg: return 'bing'
-            error('/chat', '你没有任何chatgpt接入')
-            return False
-
-    BOT = asChat()
+    BOT = asBot('*', BotUse, cfg)
     message = args.extract_plain_text()
     if len(message) == 0: return
     if BOT:
@@ -191,8 +150,8 @@ async def _(event: Event, args: Message = CommandArg()):
     if not rules('switch', config, event): return
     args = args.extract_plain_text().split(' ')
     if len(args) == 0: return
-    if args[0] == '群聊': args = ['Function','Group','groups',args[-1]]
-    if args[0] == '私聊': args = ['Function','Private','member',args[-1]]
+    if args[0] == '群聊': args = ['Function', 'Group', 'groups', args[-1]]
+    if args[0] == '私聊': args = ['Function', 'Private', 'member', args[-1]]
     if args[0] == '频道': args = ['Function', 'Guild', 'guilds', args[-1]]
     path = args[:-2]
     isOwner = (config['Bot']['owner'] == event.get_user_id())
@@ -228,7 +187,7 @@ async def _(event: Event, args: Message = CommandArg()):
         rep = {"'(access_token)': '[^’]*'": r"[$1]",
                "'(api_key)': '[^']*'": r"[$2]",
                "'(api_host)': '[^']*'": r"[$3]",
-        }
+               }
         result = re.sub("|".join(rep.keys()), '[隐藏]', str(now[args[-2]]))
         return await switch.send(result)
     now[args[-2]] = data
@@ -258,3 +217,32 @@ async def _(event: Event, args: Message = CommandArg()):
     else:
         await switchPreset.send('预设不存在，请在配置中注册')
         return error('/switchPreset', '预设不存在，请在配置中注册')
+
+
+@model.handle()
+async def _(event: Event, args: Message = CommandArg()):
+    global config
+    if not rules('switchPreset', config, event): return
+    args = args.extract_plain_text()
+    if len(args) == 0: return
+    args = args.split(' ')
+    if len(args) == 1:
+        bot_ = BotUse
+        arg = args[0]
+    elif len(args) == 2:
+        bot_ = args[0]
+        arg = args[1]
+    else:
+        return
+    modelDIR = {i.split(':')[1]: i.split(':')[0] for i in config['AI'][bot_]['models']}
+    modelLIST = list(modelDIR.values())
+    if arg in modelDIR:
+        model_ = modelDIR[arg]
+    elif arg in modelLIST:
+        model_ = arg
+    else:
+        warn('/model', '模型不存在')
+        return await model.send('模型不存在')
+    config['runtime'][bot_.replace('-', '_') + '_model'] = model_
+    config.write()
+    return await model.send(f'{bot_} 的模型更改为 {model_}')

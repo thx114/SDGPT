@@ -1,46 +1,49 @@
 import asyncio
-import os
 import re
 import time
 
-from celery import Celery
-
 from .lib.cons import *
 from .lib.base import *
-from .lib.utils import load_preset
+from .lib.utils import load_preset, switchModel
 from .config import load as cfg_load
-from nonebot.adapters.onebot.v11.adapter import Message
 
 global dotenv_file
 global chatgpt
 global chatgpt_api
 global bing
 global config
-global defaultAI
+global L_chatgpt
+global L_chatgpt_api
+global L_bing
+global L_poe
+global poe
 
 
 async def bot_start():
     global L_chatgpt
     global L_chatgpt_api
     global L_bing
+    global L_poe
     global chatgpt
     global chatgpt_api
     global bing
+    global poe
     global config
-    global defaultAI
     cfg = await cfg_load()
     if 'chatgpt' in cfg: chatgpt = cfg['chatgpt']
     if 'chatgpt-api' in cfg: chatgpt_api = cfg['chatgpt-api']
     if 'bing' in cfg: bing = cfg['bing']
+    if 'poe' in cfg: poe = cfg['poe']
+
     config = cfg['cfg']
     if config['Chat']['reload_presets']:
         config['runtime']['preset'] = ''
         config.write()
-    defaultAI = config['Chat']['defaultAI']
 
     L_chatgpt = asyncio.Lock()
-    #L_chatgpt_api = asyncio.Lock()
+    # L_chatgpt_api = asyncio.Lock()
     L_bing = asyncio.Lock()
+    L_poe = asyncio.Lock()
 
     return cfg
 
@@ -80,23 +83,34 @@ async def Chat(event, foo, BOT, message, p='', noStream=False, noOut=False):
         await foo.send(event, out, reply_message=reply)
 
 
-async def ask(bot, message, prompt=''):
+async def ask(bot, message, prompt='', model=''):
     if bot == 'chatgpt':
+        model = config['AI'][bot]['']
         async with L_chatgpt:
             if len(prompt) > 1: message = promptBase.replace("$prompt$", prompt) + message
             info('ASK', message)
+            if config['runtime']['chatgpt_model'] and config['runtime']['chatgpt_model'] != '':
+                switchModel(chatgpt, 'chatgpt', config['runtime']['chatgpt_model'])
             async for data in chatgpt.ask(message):
                 out = data['message']
             return out
     if bot == 'chatgpt-api':
         chatgpt_api.system_prompt = prompt
+        switchModel(chatgpt, 'chatgpt-api', config['runtime']['chatgpt_api_model'])
         out = await chatgpt_api.ask_async(message)
         return out
     if bot == 'bing':
         async with L_bing:
             if len(prompt) > 1: message = promptBase + message
-            out = await bing.ask(message)
+            out = await bing.ask(message, conversation_style=config['runtime']['bing_model'])
             out = out['item']['messages'][-1]['text']
+            return out
+    if bot == 'poe':
+        async with L_poe:
+            if len(prompt) > 1: message = promptBase + message
+            for chunk in poe.send_message(config['runtime']['poe_models'][config['runtime']['poe_model']], message):
+                pass
+            out = chunk["text"]
             return out
 
 
@@ -155,3 +169,11 @@ async def ask_stream(event, func, bot, message, prompt=''):
                     await stream_process('Bing')
                 else:
                     await stream_process('bing', text)
+    if bot == 'poe':
+        async with L_poe:
+            if len(prompt) > 1: message = promptBase + message
+            for chunk in poe.send_message(config['runtime']['poe_models'][config['runtime']['poe_model']], message):
+                text += chunk["text_new"]
+                isEnd = await stream_process('poe')
+                if isEnd and len(text.replace(before, '').replace(' ', '')) > 1:
+                    await stream_process('poe', text)

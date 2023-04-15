@@ -1,6 +1,7 @@
 import aiofiles
 from .logger import err
 from .cons import *
+from .base import *
 
 
 async def load_preset(dir, filename):
@@ -33,6 +34,7 @@ def rules(cmdName, config, event):
         if cmdName not in guild['function'] and ('*' not in guild['function']): return
     return True
 
+
 def getThis(event):
     if isinstance(event, GroupMessageEvent):
         return event.group_id
@@ -40,3 +42,25 @@ def getThis(event):
         return event.user_id
     if isinstance(event, GuildMessageEvent):
         return event.guild_id
+
+
+def asBot(botList, botUse, cfg):
+    if botUse != 'None': return botUse
+    if botList == '*': botList = AI_list
+    if botList == 'chat': botList = asChat
+    for bot in botList:
+        if bot in cfg:
+            return bot
+    err('无可用ai', '此功能可用ai列表中无已加载的ai' + ', '.join(botList))
+    return False
+
+
+def switchModel(bot, botName, model):
+    if botName == 'chatgpt':
+        bot.config['model'] = model
+    if botName == 'chatgpt-api':
+        bot.engine = model
+    if botName == 'bing':
+        error('switchModel', 'bing')
+    if botName == 'poe':
+        error('switchModel', 'poe')
