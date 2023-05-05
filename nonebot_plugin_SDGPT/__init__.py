@@ -1,5 +1,4 @@
 import asyncio
-import os
 import re
 import time
 from io import BytesIO
@@ -105,27 +104,34 @@ async def _(foo: Bot, event: GuildMessageEvent | GroupMessageEvent | PrivateMess
         info('Stable-Diffusion', '开始询问 api : ' + ip)
         ip = ip.split(':')
 
-        api = webuiapi.WebUIApi(host=ip[0], port=ip[1])  # type: ignore
+        api = webuiapi.WebUIApi(host=ip[0], port=ip[1])
 
-        task = asyncio.to_thread(api.txt2img(
-            prompt=prompt,
-            negative_prompt=sd['negative_prompt'],
-            steps=sd['step'],
+        def t2i(p, n, s):
+            r = api.txt2img(
+                prompt=p,
+                negative_prompt=n,
+                steps=s,
+            )
+            return r.image
+
+        task = asyncio.create_task(asyncio.to_thread(t2i,
+            prompt,
+            sd['negative_prompt'],
+            sd['step'],
         ))
         async with L_webuiapi:
-            result = await task
-        image = result.image
-        success('Stable-Diffusion', '返回图片')
-        buffered = BytesIO()
-        if DIR == '':
-            DIR = '.'
-            ID = 'OUT'
-        else:
-            lt = time.localtime(time.time())
-            ID = time.strftime("%Y_%m_%d_%H%M%S", lt)
-        image.save(f"{DIR}/{ID}.png", "PNG")
-        image.save(buffered, format="PNG")
-        await foo.send(event, MessageSegment.image(buffered), reply_message=config['Chat']['reply'])
+            image = await task
+            success('Stable-Diffusion', '返回图片')
+            buffered = BytesIO()
+            if DIR == '':
+                DIR = '.'
+                ID = 'OUT'
+            else:
+                lt = time.localtime(time.time())
+                ID = time.strftime("%Y_%m_%d_%H%M%S", lt)
+            image.save(f"{DIR}/{ID}.png", "PNG")
+            image.save(buffered, format="PNG")
+            await foo.send(event, MessageSegment.image(buffered), reply_message=config['Chat']['reply'])
         return
 
 
@@ -134,7 +140,7 @@ async def _(foo: Bot, event: Event, args: Message = CommandArg()):
     if not rules('switchAI', config, event): return
     use = args.extract_plain_text()
     if len(args) == 0: return
-    if use in config:
+    if use in cfg:
         global BotUse
         BotUse = use
         await switchAI.send('已切换到 ' + BotUse)

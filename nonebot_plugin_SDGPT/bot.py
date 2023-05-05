@@ -83,9 +83,8 @@ async def Chat(event, foo, BOT, message, p='', noStream=False, noOut=False):
         await foo.send(event, out, reply_message=reply)
 
 
-async def ask(bot, message, prompt='', model=''):
+async def ask(bot, message, prompt=''):
     if bot == 'chatgpt':
-        model = config['AI'][bot]['']
         async with L_chatgpt:
             if len(prompt) > 1: message = promptBase.replace("$prompt$", prompt) + message
             info('ASK', message)
@@ -103,7 +102,11 @@ async def ask(bot, message, prompt='', model=''):
         async with L_bing:
             if len(prompt) > 1: message = promptBase + message
             out = await bing.ask(message, conversation_style=config['runtime']['bing_model'])
+            if out['item']['messages'][-1]['author'] != 'bot':
+                bot.reset()
+                out = await bing.ask(message, conversation_style=config['runtime']['bing_model'])
             out = out['item']['messages'][-1]['text']
+            out = re.sub(r'\[\^\d\^]','',out)
             return out
     if bot == 'poe':
         async with L_poe:

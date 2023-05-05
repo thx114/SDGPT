@@ -64,3 +64,5 @@ def switchModel(bot, botName, model):
         error('switchModel', 'bing')
     if botName == 'poe':
         error('switchModel', 'poe')
+
+

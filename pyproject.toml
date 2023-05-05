@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot-plugin-SDGPT"
-version = "0.2.7"
+version = "0.2.8"
 description = "ChatBot for NoneBot : 链接 ChatGPT / Bing / Poe / Stable-Diffusion : ChatGPT Bing poe聊天, gpt解析自然语言转Stable-Diffusion生成图像"
 license = "MIT"
 authors = ["F_thx <thx1140093097@gmail.com>"]
@@ -20,7 +20,7 @@ packages = [
 python = "^3.8"
 nonebot2 = "^2.0.0-beta.1"
 python-dotenv = "*"
-revChatGPT = "^4.2.3"
+revChatGPT = "^5.0.0"
 EdgeGPT = "^0.1.25.1"
 webuiapi = "*"
 nonebot-plugin-guild-patch ="*"

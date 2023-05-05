@@ -90,7 +90,6 @@ async def load_bing(DIR, outData):
             with open(DIR['cookies_file_path'], 'r') as f:
                 cookies = json.load(f)
                 bot = Bing(cookies=cookies)
-
             proxy = Proxy(DIR)
             model = Model(DIR)
             if proxy:
@@ -113,8 +112,6 @@ async def load_poe(DIR, outData):
         return ''
     else:
         add = ''
-        bot = poe.Client(token=DIR['token'])
-        bots = bot.bot_names
         proxy = Proxy(DIR)
         model = Model(DIR)
         models = ['Sage',
@@ -124,8 +121,11 @@ async def load_poe(DIR, outData):
                   'ChatGPT',
                   'Dragonfly']
         if proxy:
-            bot.proxy = proxy
             add += f',代理: {proxy}'
+            bot = poe.Client(token=DIR['token'], proxy=proxy)
+        else:
+            bot = poe.Client(token=DIR['token'])
+        bots = bot.bot_names
         if model:
             models = list(bots.values())
             if model in models:
