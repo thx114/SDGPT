@@ -17,6 +17,11 @@
 - [x] 详细的指令配置
 
  **指令与功能**: [***SDGPT-CommandAndFunction***](https://github.com/thx114/SDGPT/wiki/%E6%8C%87%E4%BB%A4-%E4%B8%8E-%E5%8A%9F%E8%83%BD)
+ 
+## 效果
+![image](https://github.com/thx114/SDGPT/assets/52259890/376e2788-1566-4f1d-a5be-69b7d9236da5)
+![image](https://github.com/thx114/SDGPT/assets/52259890/5bf5f253-2221-46fd-96fd-14f5885c2fab)
+
 ## 使用
 > 如果你没有使用过NoneBot,  
 > 这里有一个现成的NoneBot基于SDGPT机器人:  
